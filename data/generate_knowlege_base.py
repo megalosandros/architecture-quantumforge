@@ -2,9 +2,9 @@ import os
 import json
 import re
 
-ORIGINAL_DIR = "original"
-OUTPUT_DIR = "knowledge_base"
-TERMS_MAP_PATH = "terms_map.json"
+ORIGINAL_DIR = "data/original"
+OUTPUT_DIR = "data/knowledge_base"
+TERMS_MAP_PATH = "data/terms_map.json"
 
 # Create output data directory
 os.makedirs(OUTPUT_DIR, exist_ok=True)

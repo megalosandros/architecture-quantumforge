@@ -108,6 +108,6 @@ python3 data/download_original_data.py
 ```shell
 python3 data/generate_knowledge_base.py
 ```
-Скрипт создаст директорию `data/knowledge_base.py` и сгенерирует новые файлы в том же формате .txt, с теми же названиями и 
+Скрипт создаст директорию `data/knowledge_base` и сгенерирует новые файлы в том же формате .txt, с теми же названиями и 
 заголовками, но с измененной терминологией.
 

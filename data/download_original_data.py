@@ -5,7 +5,7 @@ import time
 from bs4 import BeautifulSoup
 
 BASE_URL = "https://gameofthrones.fandom.com/ru/wiki/" # Base fandom wiki URL
-TARGET_DIR = "original" # Download directory
+TARGET_DIR = "data/original" # Download directory
 MIN_TEXT_LENGTH = 40 # To exclude redundant headers
 MAX_TEXT_LENGTH = 1000 # To exclude large technical paragraphs or auto generated data
 SECONDS_SLEEP = 1
@@ -94,6 +94,8 @@ def extract_main_content(soup):
     # Prepare final text
     paragraphs = []
     for p in content_div.find_all('p'):
+        for br in p.find_all('br'):
+            br.replace_with(' ')
         txt = clean_text(p.get_text())
         if MIN_TEXT_LENGTH <= len(txt) <= MAX_TEXT_LENGTH:
             paragraphs.append(txt)
@@ -105,7 +107,7 @@ def extract_main_content(soup):
 for page in pages:
     url = BASE_URL + page
     filename = re.sub(r'[<>:"/\\|?*]', '_', page) + ".txt"  # безопасное имя файла
-    filepath = os.path.join("", "original", filename)
+    filepath = os.path.join(TARGET_DIR, filename)
 
     print(f"Downloading {page} to {filename}")
 
