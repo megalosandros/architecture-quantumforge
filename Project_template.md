@@ -140,4 +140,22 @@ python3 bot/test_index.py
 ![test_index](images/test_index.png)
 
 
+# Задание 4. Реализация RAG-бота с техниками промптинга
 
+Для LLM выбрана модель [TheBloke/Mistral-7B-Instruct-v0.2-GGUF](https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF).
+
+Для тестирования построения пайплайна необходимо запустить скрипт:  
+```shell
+python3 bot/rag_pipeline.py
+```
+
+---
+
+Реализован простой консольный бот, запуск бота:  
+```shell
+python3 bot/bot.py
+```  
+
+Модель старается дать краткие ответы на запросы. Модель может выдать длинный ответ, если найдет косвенное упоминание 
+контекста. Если запрашиваемая информация не найдена, то модель ответ "не знаю". Пример работы:  
+![bot example](images/test_bot_1.png)

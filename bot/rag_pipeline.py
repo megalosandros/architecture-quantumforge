@@ -1,3 +1,14 @@
+import os
+
+# --- MUST be set BEFORE any Chroma or LangChain import ---
+os.environ["CHROMA_TELEMETRY"] = "off"
+os.environ["ANONYMIZED_TELEMETRY"] = "false"  # additional safety
+
+# Optional: disable posthog explicitly (used by Chroma internally)
+os.environ["POSTHOG_DEBUG"] = "0"
+os.environ["POSTHOG_DISABLED"] = "1"
+# ----------------------------------------------------------
+
 from huggingface_hub import hf_hub_download
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
@@ -79,12 +90,17 @@ def is_malicious(text: str) -> bool:
         return True
     return False
 
-# Create e5 model retriever
-class E5Retriever(BaseRetriever):
+# Create bge model retriever
+class BGERetriever(BaseRetriever):
     vectorstore: Chroma
 
     def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> List[Document]:
-        docs = self.vectorstore.similarity_search(query, k=3)  # Find 3 nearest chunks
+        
+        # Рекомендация BAAI:
+        query_with_instruction = (
+            "Represent this question for searching relevant passages: " + query
+        )
+        docs = self.vectorstore.similarity_search(query_with_instruction, k=3)  # Find 3 nearest chunks        
 
         safe_docs = []
         for doc in docs:
@@ -104,8 +120,8 @@ class E5Retriever(BaseRetriever):
 def load_llm():
     return LlamaCpp(
         model_path=str(GGUF_MODEL_PATH),
-        n_ctx=4096,
-        n_batch=512,
+        n_ctx=4096, # Mistral-7B is trained with 32k context, but for RAG we intentionally limit n_ctx to 4096
+        n_batch=256,
         n_gpu_layers=0,  # 0 = CPU only
         max_tokens=512,
         temperature=0.3,
@@ -127,7 +143,7 @@ def load_qa_chain(llm, retriever):
     return RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",  # all context in one prompt
-        retriever=retriever,  # specific e5 retriever
+        retriever=retriever,  # specific bge retriever
         chain_type_kwargs={"prompt": PromptTemplate(
             template=PROMPT_TEMPLATE,
             input_variables=["context", "question"]
@@ -164,7 +180,7 @@ if __name__ == "__main__":
 
     llm = load_llm()
 
-    retriever = E5Retriever(vectorstore=vectorstore)
+    retriever = BGERetriever(vectorstore=vectorstore)
 
     # Create RetrievalQA chain
     qa_chain = load_qa_chain(llm, retriever)
