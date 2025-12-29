@@ -29,8 +29,8 @@ MODELS_DIR.mkdir(exist_ok=True)
 assert KNOWLEDGE_BASE_DIR.exists(), f"Knowledge base directory '{KNOWLEDGE_BASE_DIR}' not found"
 
 EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
-CHUNK_SIZE = 800    # BGE рекомендует до 512 токенов, но ~800 символов ≈ 512 токенов для англ.
-CHUNK_OVERLAP = 80
+CHUNK_SIZE = 600    # BGE рекомендует до 512 токенов, но ~600 символов ≈ 400 токенов для англ.
+CHUNK_OVERLAP = 100
 COLLECTION_NAME = "yandex_rag_bot"
 
 def split_doc(doc: str):
@@ -60,9 +60,17 @@ def load_embeddings() -> HuggingFaceEmbeddings:
         model_kwargs={"device": "cpu"},
         encode_kwargs={
             "normalize_embeddings": True,
-            "batch_size": 2,
+            "batch_size": 16,
         },
     )
+
+def load_vectorstore(embeddings: HuggingFaceEmbeddings) -> Chroma:
+    return Chroma(
+        embedding_function=embeddings,
+        persist_directory=str(CHROMADB_DIR),
+        collection_name=COLLECTION_NAME
+    )
+
 
 def main():
     # Check if index already exists

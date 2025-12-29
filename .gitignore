@@ -1,3 +1,5 @@
 chromadb/
 models/
-/.venv/
+**/.venv/
+**/__pycache__/
+
