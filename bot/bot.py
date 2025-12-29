@@ -1,7 +1,19 @@
+import sys
+import os
+
 from build_index import load_embeddings, load_vectorstore
 from rag_pipeline import BGERetriever, load_llm, load_qa_chain, DANGEROUS_PATTERNS
 
 CONTENT_LENGTH = 128
+
+BANNER_TEXT = (
+    "Привет! Я — интеллектуальный RAG-бот, "
+    "эксперт по внутренней документации "
+    "(для выхода 'quit' или 'exit')."
+)
+
+BANNER_LINE = "=" * len(BANNER_TEXT)
+
 
 def extract_final_answer(text: str) -> str:
     lines = text.strip().split("\n")
@@ -18,16 +30,46 @@ def is_dangerous_query(query: str) -> bool:
     low = query.lower()
     return any(kw in low for kw in DANGEROUS_PATTERNS)
 
+def configure_stdin():
+    try:
+        sys.stdin.reconfigure(encoding="utf-8", errors="replace")
+    except AttributeError:
+        # Python < 3.7 или альтернативные окружения
+        pass
+
+def clear_stdin():
+    if not sys.stdin.isatty():
+        return
+
+    if os.name == "posix":
+        # Linux / macOS
+        try:
+            import termios
+            termios.tcflush(sys.stdin, termios.TCIFLUSH)
+        except Exception:
+            pass
+
+    elif os.name == "nt":
+        # Windows
+        try:
+            import msvcrt
+            while msvcrt.kbhit():
+                msvcrt.getwch()
+        except Exception:
+            pass
+
 
 def run_console_bot():
-    print("\n" + "="*93)
-    print("Привет! Я - бот, помогающий с внутренней документацией. Для выхода введите 'quit' или 'exit'.")
-    print("="*93 + "\n")
-
+    configure_stdin()
+    print(f"\n{BANNER_LINE}")
+    print(BANNER_TEXT)
+    print(f"{BANNER_LINE}\n")
+    
     qa_chain = load_qa_chain(load_llm(), BGERetriever(vectorstore=load_vectorstore(load_embeddings())))
 
     while True:
         try:
+            clear_stdin()
             query = input("Q: ").strip()
             if not query:
                 continue
@@ -38,7 +80,7 @@ def run_console_bot():
 
             # do not call model for dangerous queries
             if is_dangerous_query(query):
-                print("\nОтвет: Я не знаю.")
+                print("\nA: Я не знаю.")
                 continue
 
             # Sent query
@@ -48,10 +90,11 @@ def run_console_bot():
             raw_answer = result["result"].strip()
             final_answer = extract_final_answer(raw_answer)
 
-            print(f"\nОтвет: {final_answer}\n")
+            print(f"\nA: {final_answer}\n")
 
             # Optional: show source documents
-            show_sources = input("Показать источники? (y/n): ").strip().lower()
+            clear_stdin()
+            show_sources = input("Показать источники? (y/N): ").strip().lower()
             if show_sources in {"y", "yes"}:
                 print("\nИсточники:")
                 for i, doc in enumerate(result["source_documents"], 1):
