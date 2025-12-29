@@ -14,26 +14,8 @@ os.environ["POSTHOG_DISABLED"] = "1"
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from pathlib import Path
+from build_index import CHROMADB_DIR, load_embeddings, load_vectorstore
 
-
-PROJECT_ROOT = Path(__file__).parent.parent
-CHROMADB_DIR = PROJECT_ROOT / "chromadb"
-MODELS_DIR = PROJECT_ROOT / "models"
-MODELS_DIR.mkdir(exist_ok=True)
-
-EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
-COLLECTION_NAME = "yandex_rag_bot"
-
-def load_embeddings() -> HuggingFaceEmbeddings:
-    return HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL_NAME,
-        cache_folder=str(MODELS_DIR),
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={
-            "normalize_embeddings": True,
-            "batch_size": 2,
-        },
-    )
 
 def main():
     if not (CHROMADB_DIR / "chroma.sqlite3").exists():
@@ -46,11 +28,7 @@ def main():
     print("Embedding model loaded.")
 
     print("Loading ChromaDB vector index...")
-    vectorstore = Chroma(
-        persist_directory=str(CHROMADB_DIR),
-        collection_name=COLLECTION_NAME,
-        embedding_function=embeddings,
-    )
+    vectorstore = load_vectorstore(embeddings)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
     print("Index loaded successfully.")
 
@@ -58,7 +36,7 @@ def main():
     test_queries = [
         "Кем приходится Валери Камнегрив Морвену Камнегриву?",
         "Какой секрет хранит Рован Камнегрив?",
-        "Где находится Город Златых Башен?",
+        "Где находится Город Златых Башен?"
     ]
 
     print("\n Running test queries:")
