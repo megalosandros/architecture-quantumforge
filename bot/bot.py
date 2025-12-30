@@ -8,8 +8,8 @@ CONTENT_LENGTH = 128
 
 BANNER_TEXT = (
     "Привет! Я — интеллектуальный RAG-бот, "
-    "эксперт по внутренней документации "
-    "(для выхода 'quit' или 'exit')."
+    "помощник по внутренней документации "
+    "(выход: 'quit' / 'exit')."
 )
 
 BANNER_LINE = "=" * len(BANNER_TEXT)
@@ -83,7 +83,7 @@ def run_console_bot():
                 print("\nA: Я не знаю.")
                 continue
 
-            # Sent query
+            # Run query
             result = qa_chain.invoke({"query": query})
 
             # Get answer
